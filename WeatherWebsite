@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    
+    <img id="myLogo" src="myLogo.png">
+    <style>
+        body {
+            background-size: cover;
+            background-repeat: no-repeat;
+            animation: slideBg 7s linear infinite alternate;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh; 
+            margin: 0;
+        }
+
+        @keyframes slideBg {
+            0% {
+                background-image: url('cloudy.jpg');
+            }
+            50% {
+                background-image: url('raining.jpg');
+            }
+            100% {
+                background-image: url('Sunny.jpg');
+            }
+        }
+
+        .form-container {
+            background-color: black;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px auto; 
+            max-width: 400px; 
+        }
+
+        #weatherForm {
+            color: white;
+            text-align: left;
+        }
+
+        #weatherForm label {
+            display: block;
+            margin-bottom: 20px;
+        }
+
+        #weatherForm input[type="text"] {
+            width: 30%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: none;
+            background-color: #333; 
+            color: white;
+        }
+
+        #weatherForm button[type="submit"] {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50; 
+            color: white;
+            cursor: pointer;
+        }
+
+        #weatherForm button[type="submit"]:hover {
+            background-color: #45a049; 
+        }
+
+        table {
+            background-color: white; 
+            color: black;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: auto; 
+            width: 100%;
+            background-color: #333; 
+            color: white;
+            padding: 10px 0;
+        }
+        h2 {
+        text-align: center; 
+        margin-top: 0; 
+        }
+        
+    #myLogo {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 200px; 
+        height: 100px; 
+        margin: 0px; 
+    }
+    .checkbox-container {
+    margin-bottom: 10px;
+    }
+    
+
+
+
+    .checkbox-container label {
+    display: inline-block;
+    margin-right: 10px;
+    }
+
+
+    </style>
+</head>
+<body>
+    <br>
+    <br>
+    <br>
+    <div style="text-align: center;"></div>
+    <div class ="title-container"></div>
+    <h2>Weather Data</h2>
+    <form id="weatherForm">
+        <label for="countryInput">Enter Country or town:</label>
+        <input type="text" id="countryInput" name="countryInput" required>
+        <button type="submit">Get Weather</button>
+    </form>
+
+    <div id="weatherTable"></div>
+    <br>
+    <div class="checkbox-container">
+    <label for="feelsLikeCheckbox">Include Feels Like Temp Max/Min:</label>
+    <input type="checkbox" id="feelsLikeCheckbox">
+    </div>
+    <br>
+    <div class="checkbox-container">
+    <label for="windCheckbox">Include Wind Speed, Gust, Direction:</label>
+    <input type="checkbox" id="windCheckbox">
+    </div>
+    <br>
+    <div class="checkbox-container">
+    <label for="cloudCheckbox">Include Pressure, CloudCover, Visibility:</label>
+    <input type="checkbox" id="cloudCheckbox">
+    </div>
+    <br>
+    <div class="checkbox-container">
+    <label for="solarCheckbox">Include solar information (radiation and energy):</label>
+    <input type="checkbox" id="solarCheckbox">
+    </div>
+
+    <script>
+        document.getElementById("weatherForm").addEventListener("submit", function(event) {
+            event.preventDefault(); 
+
+            
+            var country = document.getElementById("countryInput").value.toLowerCase();
+
+       
+            var apiUrl = "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/" + encodeURIComponent(country) + "?unitGroup=metric&key=3RZYMR8M548QJSHEPNNFQP6YQ&contentType=json";
+
+             fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+                   
+                    var weatherData = data.days.map(function(day) {
+                        return {
+                            date: day.datetime,
+                            minTemp: day.tempmin,
+                            maxTemp: day.tempmax,
+                            feelsLikeMin: day.feelslikemin,
+                            feelsLikeMax: day.feelslikemax,
+                            precipitation: day.precip,
+                            humidity: day.humidity,
+                            windSpeed: day.windspeed,
+                            windGust: day.windgust,
+                            windDirection: day.winddir,
+                            pressure: day.pressure,
+                            cloudCover: day.cloudcover,
+                            visibility: day.visibility,
+                            solarRadiation: day.solarradiation,
+                            solarEnergy: day.solarenergy
+                        };
+                    });
+
+                    
+                    generateWeatherTables(weatherData);
+                })
+                .catch(error => {
+                    console.error('Error fetching weather data:', error);
+                    document.getElementById("weatherTable").innerHTML = "Error fetching weather data. Please try again later.";
+                });
+        });
+
+        function generateWeatherTables(weatherData) {
+            var checkboxes = document.getElementById("feelsLikeCheckbox");
+            var tableHtml = "<table border='1'><tr><th>Date</th><th>Min Temp (°C)</th><th>Max Temp (°C)</th><th>Precipitation (mm)</th><th>Humidity (%)</th></tr>";
+            weatherData.forEach(function(day) {
+                tableHtml += 
+                "<tr><td>" + day.date
+                + "</td><td>" + day.minTemp 
+                + "</td><td>" + day.maxTemp 
+                + "</td><td>" + day.precipitation 
+                + "</td><td>" + day.humidity 
+                + "</td></tr>";
+            });
+            tableHtml += "</table>";
+
+           
+            document.getElementById("weatherTable").innerHTML = tableHtml;
+
+            
+            checkboxes.addEventListener("change", function() {
+                if (this.checked) {
+                   
+                    generateFeelsLikeTempTable(weatherData);
+                } else {
+                    
+                    document.getElementById("feelsLikeTempTable").innerHTML = "";
+                }
+            });
+
+            
+            var windCheckbox = document.getElementById("windCheckbox");
+            windCheckbox.addEventListener("change", function() {
+                if (this.checked) {
+                    
+                    generateWindTable(weatherData);
+                } else {
+                    
+                    document.getElementById("windTable").innerHTML = "";
+                }
+            });
+
+            
+            var cloudCheckbox = document.getElementById("cloudCheckbox");
+            cloudCheckbox.addEventListener("change", function() {
+                if (this.checked) {
+                    
+                    generateCloudTable(weatherData);
+                } else {
+                   
+                    document.getElementById("cloudTable").innerHTML = "";
+                }
+            });
+
+            var solarCheckbox = document.getElementById("solarCheckbox");
+            solarCheckbox.addEventListener("change", function() {
+                if (this.checked) {
+                    
+                    generateSolarTable(weatherData);
+                } else {
+                    
+                    document.getElementById("solarTable").innerHTML = "";
+                }
+            });
+        }
+
+        function generateFeelsLikeTempTable(weatherData) {
+            var tableHtml = "<h2>Feels Like Temperature</h2><table border='1'><tr><th>Date</th><th>Feels Like Min (°C)</th><th>Feels Like Max (°C)</th></tr>";
+            weatherData.forEach(function(day) {
+                tableHtml += 
+                "<tr><td>" + day.date
+                + "</td><td>" + day.feelsLikeMin 
+                + "</td><td>" + day.feelsLikeMax
+                + "</td></tr>";
+            });
+            tableHtml += "</table>";
+
+           
+            document.getElementById("feelsLikeTempTable").innerHTML = tableHtml;
+        }
+
+        function generateWindTable(weatherData) {
+            var tableHtml = "<h2>Wind Data</h2><table border='1'><tr><th>Date</th><th>Wind Speed (m/s)</th><th>Wind Gust (m/s)</th><th>Wind Direction (°)</th></tr>";
+            weatherData.forEach(function(day) {
+                tableHtml += 
+                "<tr><td>" + day.date
+                + "</td><td>" + day.windSpeed 
+                + "</td><td>" + day.windGust
+                + "</td><td>" + day.windDirection  
+                + "</td></tr>";
+            });
+            tableHtml += "</table>";
+
+            
+            document.getElementById("windTable").innerHTML = tableHtml;
+        }
+
+        function generateCloudTable(weatherData) {
+            var tableHtml = "<h2>Cloud Data</h2><table border='1'><tr><th>Date</th><th>Pressure (mb)</th><th>Cloud Cover (%)</th><th>Visibility (Km)</th></tr>";
+            weatherData.forEach(function(day) {
+                tableHtml += 
+                "<tr><td>" + day.date
+                + "</td><td>" + day.pressure
+                + "</td><td>" + day.cloudCover
+                + "</td><td>" + day.visibility
+                + "</td></tr>";
+            });
+            tableHtml += "</table>";
+
+            
+            document.getElementById("cloudTable").innerHTML = tableHtml;
+        }
+
+        function generateSolarTable(weatherData) {
+            var tableHtml = "<h2>Solar Data</h2><table border='1'><tr><th>Date</th><th>Solar Radiation (W/m^2)</th><th>Solar Energy(MJ/m^2)</th></tr>";
+            weatherData.forEach(function(day) {
+                tableHtml += 
+                "<tr><td>" + day.date
+                + "</td><td>" + day.solarRadiation
+                + "</td><td>" + day.solarEnergy
+                + "</td></tr>";
+            });
+            tableHtml += "</table>";
+
+            document.getElementById("solarTable").innerHTML = tableHtml;
+        }
+    </script>
+
+    <div id="feelsLikeTempTable"></div>
+    <div id="windTable"></div>
+    <div id="cloudTable"></div>
+    <div id="solarTable"></div>
+
+    <footer>
+        <p>Copyright © 2024 Jaimin Vachhani</p>
+    </footer>
+</body>
+</html>
